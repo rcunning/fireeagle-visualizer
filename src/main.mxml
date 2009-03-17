@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (c) 2009 Yahoo! Inc.  All rights reserved.  
+The copyrights embodied in the content of this file are licensed under the BSD (revised) open source license
+-->
+<mx:WindowedApplication 
+	xmlns:mx="http://www.adobe.com/2006/mxml" 
+	layout="absolute"
+	initialize="init()" 
+	creationComplete="onCreationComplete()"
+	showStatusBar="false"
+	title="Fire Eagle Visualizer"
+	width="800" height="600"
+	titleIcon="@Embed('assets/icon.png')">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.core.UIComponent;
+			import mx.events.ResizeEvent;
+			import mx.collections.ArrayCollection;
+			
+			import net.yahoo.fireeagle.realtime.*;
+			import net.yahoo.fireeagle.*;
+			
+			private var _realtime:IFireEagleRealtime;
+			
+			[Bindable]
+			private var _jid:String = "";
+			[Bindable]
+			private var _password:String = "";
+			[Bindable]
+			private var _server:String;
+			private var _savedCredentials:SharedObject;
+			private var _connected:Boolean = false;
+			private var _contextMenu:NativeMenu;
+			
+			private var _map:IFEMap;
+			
+			[Bindable]
+			public var levels:ArrayCollection = new ArrayCollection(
+			[ /*{label:"Exact", data:0},*/ // we want woeids...not latlon
+			  /*{label:"Postal", data:1},*/ // don't use postal
+			  {label:"Neighborhood", data:2},
+			  {label:"City", data:3},
+			  {label:"Region", data:4},
+			  {label:"State", data:5},
+			  {label:"Country", data:6}]);
+			
+			private var _level:Number = 3;
+
+			
+			private function init():void
+			{
+				_savedCredentials = SharedObject.getLocal("FireEagleVisualizerCredentials", "/");
+			}
+			
+			private function onCreationComplete():void
+			{
+				addEventListener(Event.CLOSING, onClosing);
+				
+				// change map type at compile time by editing MapFactory
+				_map = FEMapFactory.getMap();
+				_map.init(_level, mapContainer.width, mapContainer.height);
+				
+				mapContainer.addChild(_map.sprite);
+				mapContainer.addEventListener(ResizeEvent.RESIZE, onMapContainerResize);
+				
+				loadCredentials();
+				
+				_contextMenu = new NativeMenu();
+				_contextMenu.addItem(new NativeMenuItem("Toggle Login Form..."));
+				addEventListener(MouseEvent.CONTEXT_MENU, onContextMenu);
+			}
+			
+			private function onContextMenu(event:MouseEvent):void{
+				_contextMenu.addEventListener(Event.SELECT, onToggleLoginForm);
+				_contextMenu.display(stage, event.stageX, event.stageY);
+				function onToggleLoginForm(menuEvent:Event):void{
+					_contextMenu.removeEventListener(Event.SELECT, onToggleLoginForm);
+					loginPanel.visible = !loginPanel.visible;
+				}
+			}
+			
+			private function onClosing(e:Event):void
+			{
+				cleanUpRealtime();
+			}
+			
+			private function cleanUpRealtime():void
+			{
+				if (_realtime != null) {
+					_realtime.stop();
+					_realtime = null;
+				}
+			}
+			
+			private function onConnectButton():void
+			{
+				if (_connected) {
+					cleanUpRealtime();
+					return;
+				}
+				saveCredentials(saveCredentialsCheckbox.selected);
+				cleanUpRealtime();
+				_realtime = new XMPPConnection(_jid, _password, _server);
+				_realtime.addEventListener(FireEagleEvent.USER_SUCCESS, onUserUpdate);
+				_realtime.addEventListener(RealTimeEvent.XMPP_AUTH_FAIL, onAuthFail);
+				_realtime.addEventListener(RealTimeEvent.XMPP_AUTH_SUCCESS, onAuthSuccess);
+				_realtime.addEventListener(RealTimeEvent.XMPP_CONNECT, onConnect);
+				_realtime.addEventListener(RealTimeEvent.XMPP_CONNECT_FAIL, onConnectFail);
+				_realtime.addEventListener(RealTimeEvent.XMPP_DISCONNECT, onDisconnect);
+				_realtime.addEventListener(RealTimeEvent.XMPP_SECURE, onSecure);
+				_realtime.addEventListener(RealTimeEvent.XMPP_SESSION, onSession);
+				_realtime.start();
+			}
+			
+			private function onMapContainerResize(e:ResizeEvent):void 
+			{
+				_map.setSize(mapContainer.width, mapContainer.height);
+			}
+			
+			private function onUserUpdate(e:FireEagleEvent):void
+			{
+				for each (var u:IFireEagleUser in e.response.users) {
+					_map.addToUserLocationCounter(u);
+					if (panMapCheckbox.selected) {
+						_map.panToUserLocation(u);
+					}
+				}
+			}
+			
+			private function onSession(e:RealTimeEvent):void
+			{
+				statusText.text = "Session established";
+				connectButton.label = "Disconnect";
+				_connected = true;
+				loginPanel.visible = false;
+			}
+			private function onSecure(e:RealTimeEvent):void
+			{
+				statusText.text = "Secure";
+			}
+			private function onAuthSuccess(e:RealTimeEvent):void
+			{
+				statusText.text = "Auth succeeded";
+			}
+			private function onAuthFail(e:RealTimeEvent):void
+			{
+				statusText.text = "Auth failed";
+			}
+			private function onDisconnect(e:RealTimeEvent):void
+			{
+				statusText.text = "Disconnected";
+				connectButton.label = "Connect";
+				_connected = false;
+			}
+			private function onConnect(e:RealTimeEvent):void
+			{
+				statusText.text = "Connected";
+			}
+			private function onConnectFail(e:RealTimeEvent):void
+			{
+				statusText.text = "Connect failed";
+			}
+			
+			private function onComboClose(event:Event):void {
+				_level = ComboBox(event.target).selectedItem.data;
+				_map.level = _level;
+			}
+			
+			private function loadCredentials():void
+			{
+				var value:String = _savedCredentials.data['jid'];
+				if (value != null && value.length > 0) {
+					_jid = value;
+				}
+				value = _savedCredentials.data['password'];
+				if (value != null && value.length > 0) {
+					_password = value;
+				}
+				value = _savedCredentials.data['server'];
+				if (value != null && value.length > 0) {
+					_server = value;
+				}
+				if (_savedCredentials.data['panMap'] != null) {
+					panMapCheckbox.selected = _savedCredentials.data['panMap'];
+				} else {
+					panMapCheckbox.selected = true;
+				}
+				if (_savedCredentials.data['level'] != null) {
+					_level = _savedCredentials.data['level'];
+					_map.level = _level;
+				}
+				levelCombo.selectedIndex = _level-2; // index off data by 2
+				if (_savedCredentials.data['saveCredentials'] != null) {
+					saveCredentialsCheckbox.selected = _savedCredentials.data['saveCredentials'];
+				}
+			}
+			
+			private function saveCredentials(save:Boolean):void
+			{
+				if (save) {
+					_savedCredentials.data['jid'] = _jid;
+					_savedCredentials.data['password']= _password;
+					_savedCredentials.data['server'] = _server;
+					_savedCredentials.data['panMap'] = panMapCheckbox.selected;
+					_savedCredentials.data['level'] = _level;
+				} else {
+					// clear
+					_savedCredentials.clear();
+				}
+				_savedCredentials.data['saveCredentials'] = saveCredentialsCheckbox.selected;
+				_savedCredentials.flush();
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:Canvas width="100%" height="100%">
+		<mx:Canvas width="100%" height="100%">
+			<mx:UIComponent id="mapContainer" width="100%" height="100%"/>
+		</mx:Canvas>
+		<mx:Canvas id="loginCanvas" width="100%" height="100%">
+			<mx:Panel id="loginPanel" title="Login to XMPP Server" 
+				x="{(loginCanvas.width-loginPanel.width)/2}"
+				y="{(loginCanvas.height-loginPanel.height)/2}">
+				<mx:Form id="loginForm">
+					<mx:FormItem label="Jid:">
+						<mx:TextInput id="jid" text="{_jid}" valueCommit="{_jid = jid.text;}"/>
+					</mx:FormItem>
+					<mx:FormItem label="Password:">
+						<mx:TextInput id="passwordText" text="{_password}" displayAsPassword="true" valueCommit="{_password = passwordText.text;}"/>
+					</mx:FormItem>
+					<mx:FormItem label="Server(optional):">
+						<mx:TextInput id="serverText" text="{_server}" valueCommit="{_server = serverText.text;}"/>
+					</mx:FormItem>
+					<mx:HBox width="100%">
+						<mx:CheckBox id="saveCredentialsCheckbox" label="Save Credentials"/>
+						<mx:Spacer width="100%"/>
+						<mx:Button id="connectButton" label="Connect" click="onConnectButton()"/>
+					</mx:HBox>
+					<mx:HBox width="100%">
+						<mx:Spacer width="100%"/>
+						<mx:Label id="statusText" text=""/>
+					</mx:HBox>
+					<mx:HRule width="100%"/>
+					<mx:HBox width="100%">
+						<mx:CheckBox id="panMapCheckbox" label="Pan map on location update"/>
+						<mx:Spacer width="100%"/>
+					</mx:HBox>
+					<mx:Label text="Level of location detail"/>
+					<mx:ComboBox id="levelCombo" dataProvider="{levels}" width="150" close="onComboClose(event);"/>
+				</mx:Form>
+			</mx:Panel>
+		</mx:Canvas>
+	</mx:Canvas>
+	
+</mx:WindowedApplication>

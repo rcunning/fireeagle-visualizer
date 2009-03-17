@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>fireeagle-visualizer</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>com.adobe.flexbuilder.project.flexbuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+		<buildCommand>
+			<name>com.adobe.flexbuilder.apollo.apollobuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>com.adobe.flexbuilder.apollo.apollonature</nature>
+		<nature>com.adobe.flexbuilder.project.flexnature</nature>
+		<nature>com.adobe.flexbuilder.project.actionscriptnature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>[source path] src</name>
+			<type>2</type>
+			<locationURI>FE_SRC/fireeagle-as%33/src</locationURI>
+		</link>
+		<link>
+			<name>[source path] hurlant_tls</name>
+			<type>2</type>
+			<locationURI>FE_SRC/seesmic-as%33-xmpp-read-only/hurlant_tls</locationURI>
+		</link>
+		<link>
+			<name>[source path] seesmic-as3-xmpp</name>
+			<type>2</type>
+			<locationURI>FE_SRC/seesmic-as%33-xmpp-read-only/seesmic-as%33-xmpp</locationURI>
+		</link>
+		<link>
+			<name>[source path] Source</name>
+			<type>2</type>
+			<locationURI>FE_SRC/yos_as%33_sdk-1.1.1/Source</locationURI>
+		</link>
+	</linkedResources>
+</projectDescription>
