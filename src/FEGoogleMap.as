@@ -18,8 +18,8 @@ package
 
 	public class FEGoogleMap implements IFEMap
 	{
-		private var _mapApiKey:String = "ABQIAAAAk4Irq2plG4xKTgvC0OLSghRA6uQ-XX16nCnF8PMSo17K7OBBgBR25N2EtkogXPb2r_Rq7urpOF5hTA";
-		private var _mapUrl:String = "http://fireeagle.com/";
+		private var _mapApiKey:String = "";
+		private var _mapUrl:String = "";
 		
 		private var _map:Map;
 		

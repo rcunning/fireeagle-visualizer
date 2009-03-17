@@ -21,7 +21,7 @@ package
 
 	public class FEYahooMap implements IFEMap
 	{
-		private var _mapApiKey:String = "oTFtvunV34EyaaXhcqffY9I0ktlhMrtsJtaZc2AYscQfTW.4.Y0_CpOPqmSrQ.u8MWu.aY_w";
+		private var _mapApiKey:String = "";
 		
 		private var _map:YahooMap;
 		

@@ -27,35 +27,24 @@ Download the other required sources:
 
 Setup:
 
-    Download fireeagleas3tester to <your extract path>
+    Download fireeagle-visualizer to <your extract path>
     Download Fire Eagle AS3 classes to <your extract path>
     Download YOS to <your extract path>
     Download Seemic XMPP to <your extract path>
+    Download Yahoo! Maps AS3 Component to <your extract path>
     Create a new workspace in Flex Builder 3+. 
-    Import fireeagleas3tester Flex project 
+    Import fireeagle-visualizer Flex project 
       Right (or control) click in Flex Navigator, choose Import...
       select Flex Builder/Flex Project, click Next
-      use project folder = <your extract path>/fireeagleas3tester
+      use project folder = <your extract path>/fireeagle-visualizer
       uncheck 'Use default location'
       Finish
-    Configure source directories
-      Select Window->Preferences...
-      General->Workspace->Linked Resources
-      New... Name: FE_SRC, Location: <your extract path>
-      Ok, Ok
-    Make sure all source paths map correctly
-      Right (or control) click on fireeagleas3tester project in Flex Navigator
-      Select Flex Build Path
-      Verify all paths are correct: src (FE AS3 classes), yos_as3_sdk (might have to change version), Seesmic XMPP (might not be in /seesmic-as3-xmpp-read-only)
-    Optionally init your OAuth values
-      Open fireeagleas3tester.mxml code edit in fireeagleas3tester project src
-      Edit 'init values for OAuth params' near top
+    Configure source directories and lib directories to include all dependencies
+      TODO: write out directions for doing this
     All set to run!
 
 
 ## Want TODO:
-
-Add SharedObject session store for OAuth values and XMPP login credentials
 
 
 ## Getting Help
